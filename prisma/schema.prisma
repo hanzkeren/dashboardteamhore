@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  name         String   @db.VarChar(255)
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  accessKey String     @unique @default(uuid())
+  nama      String   @db.VarChar(255)
+  toko      String   @db.VarChar(255)
+  email     String?  @unique @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  budgets Budget[]
+  reports AdReport[]
+
+  @@map("clients")
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  tanggal   DateTime @db.Timestamp(6)
+  jenis     Jenis // <— ini cukup, ga usah @db.VarChar
+  nominal   Decimal  @db.Decimal(10, 2)
+  catatan   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("budgets")
+}
+
+model AdReport {
+  id          String   @id @default(uuid())
+  clientId    String   @map("client_id")
+  tanggal     DateTime @db.Timestamp(6)
+  idAccount   String   @map("id_account") @db.VarChar(100)
+  spend       Decimal  @db.Decimal(10, 2)
+  clicks      Int?
+  impressions Int?
+  conversions Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("ad_reports")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Jenis {
+  topup
+  bonus
+  adj
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}

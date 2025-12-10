@@ -1,0 +1,17 @@
+node_modules
+.next
+.turbo
+dist
+build
+coverage
+.git
+.gitignore
+Dockerfile
+Dockerfile.*
+README.md
+*.md
+**/*.log
+*.env
+.env*
+*.local
+tmp
