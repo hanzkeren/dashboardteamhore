@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   FileBarChart,
   Wallet,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,7 @@ export default function PublicClientLayout({
     from: searchParams.get("from") ? new Date(searchParams.get("from")!) : undefined,
     to: searchParams.get("to") ? new Date(searchParams.get("to")!) : undefined,
   });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Handle Date Change -> Push ke URL
   const handleDateSelect = (newDate: DateRange | undefined) => {
@@ -70,36 +73,60 @@ export default function PublicClientLayout({
     },
   ];
 
+  const queryString = searchParams.toString();
+  const buildHref = (href: string) => (queryString ? `${href}?${queryString}` : href);
+
+  const SidebarContent = () => (
+    <div className="flex h-full flex-col">
+      <div className="p-6 h-16 border-b flex items-center">
+        <h2 className="text-xl font-bold tracking-tight text-primary">Teamhore</h2>
+      </div>
+      <nav className="p-4 space-y-2">
+        {menuItems.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link key={item.href} href={buildHref(item.href)}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className="w-full justify-start gap-2"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.title}
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* SIDEBAR */}
+      {/* SIDEBAR DESKTOP */}
       <aside className="w-64 bg-white border-r hidden md:block">
-        <div className="p-6 h-16 border-b flex items-center">
-          <h2 className="text-xl font-bold tracking-tight text-primary">Teamhore</h2>
-        </div>
-        <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link key={item.href} href={item.href + "?" + searchParams.toString()}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className="w-full justify-start gap-2"
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.title}
-                </Button>
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarContent />
       </aside>
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* HEADER (Date Filter Disini) */}
-        <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-          <h1 className="font-semibold text-lg">Client Dashboard</h1>
+        {/* HEADER with mobile toggle */}
+        <header className="h-16 border-b bg-white flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <SheetTitle className="sr-only">Navigasi</SheetTitle>
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+            <h1 className="font-semibold text-lg">Client Dashboard</h1>
+          </div>
 
           {/* DATE PICKER */}
           <Popover>
@@ -108,7 +135,7 @@ export default function PublicClientLayout({
                 id="date"
                 variant={"outline"}
                 className={cn(
-                  "w-[300px] justify-start text-left font-normal",
+                  "w-[260px] md:w-[300px] justify-start text-left font-normal",
                   !date && "text-muted-foreground"
                 )}
               >
@@ -140,7 +167,7 @@ export default function PublicClientLayout({
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {children}
         </main>
       </div>
